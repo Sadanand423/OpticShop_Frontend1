@@ -11,7 +11,8 @@ import {
   Settings,
   LogOut,
   Crown,
-  Home
+  Home,
+  UserCog
 } from 'lucide-react';
 
 const Layout = ({ children }) => {
@@ -29,6 +30,7 @@ const Layout = ({ children }) => {
     { path: '/admin/products', icon: Package, label: 'Products', gradient: 'gradient-warning' },
     { path: '/admin/invoices', icon: List, label: 'Invoice List', gradient: 'gradient-info' },
     { path: '/admin/payments', icon: CreditCard, label: 'Payments', gradient: 'gradient-danger' },
+    { path: '/admin/employees', icon: UserCog, label: 'Employees', gradient: 'gradient-secondary' },
     { path: '/admin/reports', icon: BarChart3, label: 'Reports', gradient: 'gradient-primary' },
   ];
 
@@ -82,13 +84,6 @@ const Layout = ({ children }) => {
         {/* Footer */}
         <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
           <div className="space-y-2">
-            <Link
-              to="/"
-              className="flex items-center px-4 py-3 text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-green-500 hover:to-teal-500 rounded-xl transition-all duration-300 w-full"
-            >
-              <Home className="w-5 h-5 mr-3" />
-              Home
-            </Link>
             <Link
               to="/admin/settings"
               className="flex items-center px-4 py-3 text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-purple-500 hover:to-blue-500 rounded-xl transition-all duration-300 w-full"
