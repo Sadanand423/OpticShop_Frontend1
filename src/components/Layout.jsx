@@ -37,9 +37,9 @@ const Layout = ({ children }) => {
   return (
     <div className="flex h-screen bg-gray-50">
       {/* Sidebar */}
-      <div className="w-72 bg-white shadow-2xl border-r border-gray-200 animate-slideInLeft relative">
+      <div className="w-72 bg-white shadow-2xl border-r border-gray-200 animate-slideInLeft flex flex-col h-full">
         {/* Header */}
-        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-600 to-blue-600">
+        <div className="p-6 border-b border-gray-100 bg-gradient-to-r from-purple-600 to-blue-600 flex-shrink-0">
           <div className="flex items-center space-x-3">
             <div className="p-2 bg-white/20 rounded-xl shadow-lg floating">
               <Crown className="w-6 h-6 text-white" />
@@ -52,7 +52,7 @@ const Layout = ({ children }) => {
         </div>
         
         {/* Navigation */}
-        <nav className="mt-6 px-4 space-y-2 pb-32">
+        <nav className="flex-1 overflow-y-auto mt-6 px-4 space-y-2">
           {menuItems.map((item, index) => {
             const Icon = item.icon;
             const isActive = location.pathname === item.path;
@@ -82,8 +82,15 @@ const Layout = ({ children }) => {
         </nav>
         
         {/* Footer */}
-        <div className="absolute bottom-0 left-0 right-0 p-4 bg-white border-t border-gray-100">
+        <div className="flex-shrink-0 p-4 bg-white border-t border-gray-100">
           <div className="space-y-2">
+            <Link
+              to="/admin/profile"
+              className="flex items-center px-4 py-3 text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-green-500 hover:to-teal-500 rounded-xl transition-all duration-300 w-full"
+            >
+              <UserCog className="w-5 h-5 mr-3" />
+              Profile
+            </Link>
             <Link
               to="/admin/settings"
               className="flex items-center px-4 py-3 text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-purple-500 hover:to-blue-500 rounded-xl transition-all duration-300 w-full"
