@@ -10,35 +10,15 @@ const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
- const handleSubmit = async (e) => {
-  e.preventDefault();
-
-  try {
-    const response = await fetch("http://localhost:8080/api/admin/login", {
-      method: "POST",
-      headers: {
-        "Content-Type": "application/json"
-      },
-      body: JSON.stringify({
-        username: formData.username,
-        password: formData.password
-      })
-    });
-
-    if (response.ok) {
-      // optional: store login state
-      localStorage.setItem("adminLoggedIn", "true");
-
-      navigate("/admin");
+  const handleSubmit = (e) => {
+    e.preventDefault();
+    // Hardcoded admin credentials
+    if (formData.username === 'admin' && formData.password === 'admin123') {
+      navigate('/admin');
     } else {
-      const errorMsg = await response.text();
-      alert(errorMsg || "Invalid credentials");
+      alert('Invalid credentials! Use: admin / admin123');
     }
-  } catch (error) {
-    console.error("Login error:", error);
-    alert("Server error. Please try again later.");
-  }
-};
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -82,7 +62,7 @@ const AdminLogin = () => {
                 value={formData.username}
                 onChange={handleChange}
                 className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all"
-                placeholder="Enter your username"
+                placeholder="Enter: admin"
                 required
               />
             </div>
@@ -98,7 +78,7 @@ const AdminLogin = () => {
                   value={formData.password}
                   onChange={handleChange}
                   className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-purple-500 focus:border-transparent transition-all pr-12"
-                  placeholder="Enter your password"
+                  placeholder="Enter: admin123"
                   required
                 />
                 <button
@@ -111,7 +91,14 @@ const AdminLogin = () => {
               </div>
             </div>
 
-           
+            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
+              <p className="text-sm text-blue-700">
+                <strong>Demo Credentials:</strong><br />
+                Username: <code className="bg-blue-100 px-1 rounded">admin</code><br />
+                Password: <code className="bg-blue-100 px-1 rounded">admin123</code>
+              </p>
+            </div>
+
             <button
               type="submit"
               className="w-full bg-gradient-to-r from-purple-600 to-blue-600 text-white font-semibold py-3 px-4 rounded-xl hover:from-purple-700 hover:to-blue-700 transition-all duration-300 transform hover:scale-105"

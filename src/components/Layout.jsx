@@ -85,13 +85,6 @@ const Layout = ({ children }) => {
         <div className="flex-shrink-0 p-4 bg-white border-t border-gray-100">
           <div className="space-y-2">
             <Link
-              to="/admin/profile"
-              className="flex items-center px-4 py-3 text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-green-500 hover:to-teal-500 rounded-xl transition-all duration-300 w-full"
-            >
-              <UserCog className="w-5 h-5 mr-3" />
-              Profile
-            </Link>
-            <Link
               to="/admin/settings"
               className="flex items-center px-4 py-3 text-gray-700 hover:text-white hover:bg-gradient-to-r hover:from-purple-500 hover:to-blue-500 rounded-xl transition-all duration-300 w-full"
             >

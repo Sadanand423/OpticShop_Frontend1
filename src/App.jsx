@@ -15,7 +15,6 @@ import Payments from './pages/Payments';
 import Reports from './pages/Reports';
 import Settings from './pages/Settings';
 import EmployeeManagement from './pages/EmployeeManagement';
-import AdminProfile from './pages/AdminProfile';
 
 const App = () => {
   return (
@@ -46,7 +45,6 @@ const App = () => {
         <Route path="/admin/payments" element={<Layout><Payments /></Layout>} />
         <Route path="/admin/reports" element={<Layout><Reports /></Layout>} />
         <Route path="/admin/employees" element={<Layout><EmployeeManagement /></Layout>} />
-        <Route path="/admin/profile" element={<Layout><AdminProfile /></Layout>} />
         <Route path="/admin/settings" element={<Layout><Settings /></Layout>} />
       </Routes>
     </Router>
