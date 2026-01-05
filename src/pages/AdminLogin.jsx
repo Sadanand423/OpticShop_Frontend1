@@ -10,15 +10,38 @@ const AdminLogin = () => {
   const [showPassword, setShowPassword] = useState(false);
   const navigate = useNavigate();
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    // Hardcoded admin credentials
-    if (formData.username === 'admin' && formData.password === 'admin123') {
-      navigate('/admin');
-    } else {
-      alert('Invalid credentials! Use: admin / admin123');
+  const handleSubmit = async (e) => {
+  e.preventDefault();
+
+  try {
+    const response = await fetch("http://localhost:8080/api/admin/login", {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json"
+      },
+      body: JSON.stringify({
+        username: formData.username,
+        password: formData.password
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error("Invalid credentials");
     }
-  };
+
+    const data = await response.json();
+
+    // ✅ Save JWT token
+    localStorage.setItem("token", data.token);
+
+    // ✅ Navigate to admin dashboard
+    navigate("/admin");
+
+  } catch (error) {
+    alert("Login failed: Invalid username or password");
+  }
+};
+
 
   const handleChange = (e) => {
     setFormData({
@@ -91,13 +114,7 @@ const AdminLogin = () => {
               </div>
             </div>
 
-            <div className="bg-blue-50 border border-blue-200 rounded-xl p-3">
-              <p className="text-sm text-blue-700">
-                <strong>Demo Credentials:</strong><br />
-                Username: <code className="bg-blue-100 px-1 rounded">admin</code><br />
-                Password: <code className="bg-blue-100 px-1 rounded">admin123</code>
-              </p>
-            </div>
+        
 
             <button
               type="submit"

@@ -51,47 +51,89 @@ const Settings = () => {
       [field]: !prev[field]
     }));
   };
+const handleUpdatePassword = async (e) => {
+  e.preventDefault();
 
-  const handleUpdatePassword = (e) => {
-    e.preventDefault();
-    
-    if (passwordForm.newPassword !== passwordForm.confirmPassword) {
-      alert('New passwords do not match');
-      return;
-    }
+  if (passwordForm.newPassword !== passwordForm.confirmPassword) {
+    alert('Passwords do not match');
+    return;
+  }
 
-    if (!passwordForm.currentPassword) {
-      alert('Please enter your current password');
-      return;
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    alert('Please login again');
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:8080/api/admin/update', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        currentPassword: passwordForm.currentPassword,
+        newPassword: passwordForm.newPassword
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Update failed');
     }
 
     alert('Password updated successfully');
+
     setPasswordForm({
       currentPassword: '',
       newPassword: '',
       confirmPassword: ''
     });
-  };
 
-  const handleUpdateUsername = (e) => {
-    e.preventDefault();
-    
-    if (!usernameForm.currentPassword) {
-      alert('Please enter your current password');
-      return;
-    }
+  } catch (error) {
+    alert('Password update failed');
+  }
+};
 
-    if (!usernameForm.newUsername) {
-      alert('Please enter a new username');
-      return;
+  const handleUpdateUsername = async (e) => {
+  e.preventDefault();
+
+  const token = localStorage.getItem('token');
+
+  if (!token) {
+    alert('Please login again');
+    return;
+  }
+
+  try {
+    const response = await fetch('http://localhost:8080/api/admin/update', {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': 'Bearer ' + token
+      },
+      body: JSON.stringify({
+        currentPassword: usernameForm.currentPassword,
+        newUsername: usernameForm.newUsername
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error('Update failed');
     }
 
     alert('Username updated successfully');
+
     setUsernameForm({
       currentPassword: '',
       newUsername: ''
     });
-  };
+
+  } catch (error) {
+    alert('Username update failed');
+  }
+};
 
   const handleSave = () => {
     alert('Settings saved successfully!');
