@@ -3,14 +3,15 @@ import { UserPlus, Edit, Trash2, Eye, EyeOff, Save, X } from 'lucide-react';
 
 const EmployeeManagement = () => {
   const [employees, setEmployees] = useState([
-    { id: 1, username: 'john_doe', password: 'password123', name: 'John Doe', role: 'Cashier', status: 'Active' },
-    { id: 2, username: 'jane_smith', password: 'secure456', name: 'Jane Smith', role: 'Sales', status: 'Active' },
+    { id: 1, employeeId: 'EMP001', username: 'john_doe', password: 'password123', name: 'John Doe', role: 'Cashier', status: 'Active' },
+    { id: 2, employeeId: 'EMP002', username: 'jane_smith', password: 'secure456', name: 'Jane Smith', role: 'Sales', status: 'Active' },
   ]);
 
   const [showForm, setShowForm] = useState(false);
   const [editingId, setEditingId] = useState(null);
   const [showPasswords, setShowPasswords] = useState({});
   const [formData, setFormData] = useState({
+    employeeId: '',
     username: '',
     password: '',
     name: '',
@@ -27,17 +28,19 @@ const EmployeeManagement = () => {
     } else {
       const newEmployee = {
         id: Date.now(),
+        employeeId: formData.employeeId,
         ...formData,
         status: 'Active'
       };
       setEmployees([...employees, newEmployee]);
     }
-    setFormData({ username: '', password: '', name: '', role: 'Cashier' });
+    setFormData({ employeeId: '', username: '', password: '', name: '', role: 'Cashier' });
     setShowForm(false);
   };
 
   const handleEdit = (employee) => {
     setFormData({
+      employeeId: employee.employeeId,
       username: employee.username,
       password: employee.password,
       name: employee.name,
@@ -61,7 +64,7 @@ const EmployeeManagement = () => {
   };
 
   const resetForm = () => {
-    setFormData({ username: '', password: '', name: '', role: 'Cashier' });
+    setFormData({ employeeId: '', username: '', password: '', name: '', role: 'Cashier' });
     setEditingId(null);
     setShowForm(false);
   };
@@ -101,6 +104,18 @@ const EmployeeManagement = () => {
           </div>
           
           <form onSubmit={handleSubmit} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Employee ID</label>
+              <input
+                type="text"
+                value={formData.employeeId}
+                onChange={(e) => setFormData({...formData, employeeId: e.target.value})}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="e.g., EMP001"
+                required
+              />
+            </div>
+            
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Full Name</label>
               <input
@@ -177,6 +192,7 @@ const EmployeeManagement = () => {
           <table className="w-full">
             <thead className="bg-gray-50">
               <tr>
+                <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase">Employee ID</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase">Name</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase">Username</th>
                 <th className="px-6 py-4 text-left text-sm font-medium text-gray-500 uppercase">Password</th>
@@ -188,6 +204,9 @@ const EmployeeManagement = () => {
             <tbody className="divide-y divide-gray-200">
               {employees.map((employee) => (
                 <tr key={employee.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="font-medium text-gray-900">{employee.employeeId}</div>
+                  </td>
                   <td className="px-6 py-4">
                     <div className="font-medium text-gray-900">{employee.name}</div>
                   </td>
