@@ -16,6 +16,11 @@ const Settings = () => {
     confirmPassword: ''
   });
 
+  const [usernameForm, setUsernameForm] = useState({
+    currentPassword: '',
+    newUsername: ''
+  });
+
   const [showPasswords, setShowPasswords] = useState({
     current: false,
     new: false,
@@ -29,6 +34,13 @@ const Settings = () => {
   const handlePasswordChange = (e) => {
     setPasswordForm({
       ...passwordForm,
+      [e.target.name]: e.target.value
+    });
+  };
+
+  const handleUsernameChange = (e) => {
+    setUsernameForm({
+      ...usernameForm,
       [e.target.name]: e.target.value
     });
   };
@@ -58,6 +70,26 @@ const Settings = () => {
       currentPassword: '',
       newPassword: '',
       confirmPassword: ''
+    });
+  };
+
+  const handleUpdateUsername = (e) => {
+    e.preventDefault();
+    
+    if (!usernameForm.currentPassword) {
+      alert('Please enter your current password');
+      return;
+    }
+
+    if (!usernameForm.newUsername) {
+      alert('Please enter a new username');
+      return;
+    }
+
+    alert('Username updated successfully');
+    setUsernameForm({
+      currentPassword: '',
+      newUsername: ''
     });
   };
 
@@ -155,6 +187,56 @@ const Settings = () => {
               </select>
             </div>
           </div>
+        </div>
+
+        {/* Security Settings - Username Update */}
+        <div className="bg-white rounded-2xl p-6 shadow-lg border border-gray-100 lg:col-span-2">
+          <div className="flex items-center mb-6">
+            <User className="w-6 h-6 text-blue-600 mr-3" />
+            <h2 className="text-2xl font-bold text-gray-800">Change Username</h2>
+          </div>
+          <form onSubmit={handleUpdateUsername} className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                Current Password *
+              </label>
+              <div className="relative">
+                <input
+                  type="password"
+                  name="currentPassword"
+                  value={usernameForm.currentPassword}
+                  onChange={handleUsernameChange}
+                  className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                  placeholder="Enter current password"
+                  required
+                />
+              </div>
+            </div>
+            
+            <div>
+              <label className="block text-sm font-medium text-gray-700 mb-2">
+                New Username *
+              </label>
+              <input
+                type="text"
+                name="newUsername"
+                value={usernameForm.newUsername}
+                onChange={handleUsernameChange}
+                className="w-full px-4 py-3 border border-gray-300 rounded-xl focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                placeholder="Enter new username"
+                required
+              />
+            </div>
+            
+            <div className="md:col-span-2">
+              <button
+                type="submit"
+                className="px-6 py-3 bg-gradient-to-r from-blue-600 to-purple-600 text-white font-semibold rounded-xl hover:from-blue-700 hover:to-purple-700 transition-all duration-300"
+              >
+                Update Username
+              </button>
+            </div>
+          </form>
         </div>
 
         {/* Security Settings - Password Update */}
