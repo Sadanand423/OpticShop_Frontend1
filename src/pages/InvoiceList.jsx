@@ -8,6 +8,10 @@ const InvoiceList = () => {
   const [error, setError] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editInvoice, setEditInvoice] = useState(null);
+  const [showViewModal, setShowViewModal] = useState(false);
+  const [viewInvoiceData, setViewInvoiceData] = useState(null);
 
   useEffect(() => {
     fetchInvoices();
@@ -33,9 +37,10 @@ const InvoiceList = () => {
       const data = await invoiceService.getAllInvoices();
       console.log('Fetched invoices:', data);
       
-      // Handle different response formats
+      // Handle different response formats and sort by ID descending (newest first)
       const invoiceArray = Array.isArray(data) ? data : (data.invoices || data.data || []);
-      setInvoices(invoiceArray);
+      const sortedInvoices = invoiceArray.sort((a, b) => b.id - a.id);
+      setInvoices(sortedInvoices);
       setError(null);
     } catch (err) {
       console.error('Error fetching invoices:', err);
@@ -48,10 +53,156 @@ const InvoiceList = () => {
   const viewInvoice = async (id) => {
     try {
       const invoice = await invoiceService.getInvoiceById(id);
-      const customerName = invoice.customer?.name || invoice.customerName || 'N/A';
-      alert(`Invoice Details:\nID: ${invoice.id}\nCustomer: ${customerName}\nTotal: ₹${invoice.total}\nBalance: ₹${invoice.balance}`);
+      setViewInvoiceData(invoice);
+      setShowViewModal(true);
     } catch (err) {
       alert('Error fetching invoice: ' + err.message);
+    }
+  };
+
+  const deleteInvoice = async (id) => {
+    if (!confirm('Are you sure you want to delete this invoice?')) return;
+    
+    try {
+      await invoiceService.deleteInvoice(id);
+      alert('Invoice deleted successfully!');
+      fetchInvoices(); // Refresh list
+    } catch (err) {
+      alert('Error deleting invoice: ' + err.message);
+    }
+  };
+
+  const editInvoiceHandler = (invoice) => {
+    setEditInvoice({
+      id: invoice.id,
+      paymentMode: invoice.paymentMode || 'Cash',
+      remarks: invoice.remarks || '',
+      deliveryDate: invoice.deliveryDate || '',
+      advance: invoice.advance || 0,
+      balance: invoice.balance || 0
+    });
+    setShowEditModal(true);
+  };
+
+  const updateInvoice = async () => {
+    try {
+      // Calculate new balance when advance changes
+      const updatedData = {
+        ...editInvoice,
+        balance: (viewInvoiceData?.total || 0) - editInvoice.advance
+      };
+      
+      await invoiceService.updateInvoice(editInvoice.id, updatedData);
+      alert('Invoice updated successfully!');
+      setShowEditModal(false);
+      fetchInvoices();
+    } catch (err) {
+      alert('Error updating invoice: ' + err.message);
+    }
+  };
+
+  const printInvoiceFromView = (invoiceData) => {
+    const printWindow = window.open('', '_blank');
+    printWindow.document.write(`
+      <html>
+        <head>
+          <title>Invoice - ${invoiceData.invoiceNumber}</title>
+          <style>
+            body { font-family: Arial, sans-serif; margin: 20px; font-size: 12px; }
+            .header { text-align: center; margin-bottom: 20px; border-bottom: 2px solid #000; padding-bottom: 10px; }
+            .shop-name { font-size: 24px; font-weight: bold; margin-bottom: 5px; }
+            .shop-details { font-size: 10px; color: #666; }
+            .invoice-info { display: flex; justify-content: space-between; margin-bottom: 15px; }
+            .customer-info { margin-bottom: 15px; }
+            table { width: 100%; border-collapse: collapse; margin-bottom: 15px; }
+            th, td { border: 1px solid #ddd; padding: 6px; text-align: left; font-size: 11px; }
+            th { background-color: #f5f5f5; font-weight: bold; }
+            .totals { text-align: right; margin-top: 10px; }
+            .total-row { font-weight: bold; font-size: 14px; }
+            .footer { margin-top: 20px; border-top: 1px solid #ddd; padding-top: 10px; font-size: 10px; }
+            @media print { body { margin: 0; } }
+          </style>
+        </head>
+        <body>
+          <div class="header">
+            <div class="shop-name">OPTICAL SHOP</div>
+            <div class="shop-details">
+              Address: 123 Main Street, City - 123456<br>
+              Phone: +91 9876543210 | Email: info@opticalshop.com<br>
+              GST No: 22AAAAA0000A1Z5
+            </div>
+          </div>
+          
+          <div class="invoice-info">
+            <div>
+              <strong>Invoice No:</strong> ${invoiceData.invoiceNumber}<br>
+              <strong>Date:</strong> ${new Date(invoiceData.invoiceDate).toLocaleDateString()}<br>
+              <strong>Payment Mode:</strong> ${invoiceData.paymentMode}
+            </div>
+            <div>
+              ${invoiceData.deliveryDate ? `<strong>Delivery Date:</strong> ${new Date(invoiceData.deliveryDate).toLocaleDateString()}<br>` : ''}
+            </div>
+          </div>
+          
+          <div class="customer-info">
+            <strong>Bill To:</strong><br>
+            <strong>Name:</strong> ${invoiceData.customer?.name || 'N/A'}<br>
+            <strong>Phone:</strong> ${invoiceData.customer?.phone || 'N/A'}<br>
+            <strong>Address:</strong> ${invoiceData.customer?.address || 'N/A'}
+          </div>
+          
+          <table>
+            <thead>
+              <tr>
+                <th>S.No</th><th>Frame</th><th>Lens</th><th>Frame Price</th><th>Lens Price</th><th>Qty</th><th>Total</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${invoiceData.items?.map((item, index) => `
+                <tr>
+                  <td>${index + 1}</td>
+                  <td>${item.frame || '-'}</td>
+                  <td>${item.lens || '-'}</td>
+                  <td>₹${item.framePrice}</td>
+                  <td>₹${item.lensPrice}</td>
+                  <td>${item.quantity}</td>
+                  <td>₹${item.total}</td>
+                </tr>
+              `).join('')}
+            </tbody>
+          </table>
+          
+          <div class="totals">
+            <div>Subtotal: ₹${invoiceData.subtotal}</div>
+            <div>Discount (${invoiceData.discountPercent}%): -₹${invoiceData.discountAmount}</div>
+            <div>Tax (${invoiceData.taxPercent}%): ₹${invoiceData.taxAmount}</div>
+            <div class="total-row">Total: ₹${invoiceData.total}</div>
+            <div>Advance: ₹${invoiceData.advance}</div>
+            <div class="total-row">Balance: ₹${invoiceData.balance}</div>
+          </div>
+          
+          ${invoiceData.remarks ? `<div style="margin-top: 15px;"><strong>Remarks:</strong> ${invoiceData.remarks}</div>` : ''}
+          
+          <script>
+            window.onload = function() {
+              window.print();
+              window.onafterprint = function() {
+                window.close();
+              }
+            }
+          </script>
+        </body>
+      </html>
+    `);
+    printWindow.document.close();
+  };
+
+  const downloadInvoice = async (invoice) => {
+    try {
+      const fullInvoice = await invoiceService.getInvoiceById(invoice.id);
+      printInvoiceFromView(fullInvoice);
+    } catch (err) {
+      alert('Error downloading invoice: ' + err.message);
     }
   };
 
@@ -202,13 +353,25 @@ const InvoiceList = () => {
                         >
                           <Eye className="w-4 h-4" />
                         </button>
-                        <button className="text-green-600 hover:text-green-800" title="Download">
+                        <button 
+                          onClick={() => downloadInvoice(invoice)}
+                          className="text-green-600 hover:text-green-800" 
+                          title="Download"
+                        >
                           <Download className="w-4 h-4" />
                         </button>
-                        <button className="text-yellow-600 hover:text-yellow-800" title="Edit">
+                        <button 
+                          onClick={() => editInvoiceHandler(invoice)}
+                          className="text-yellow-600 hover:text-yellow-800" 
+                          title="Edit"
+                        >
                           <Edit className="w-4 h-4" />
                         </button>
-                        <button className="text-red-600 hover:text-red-800" title="Delete">
+                        <button 
+                          onClick={() => deleteInvoice(invoice.id)}
+                          className="text-red-600 hover:text-red-800" 
+                          title="Delete"
+                        >
                           <Trash2 className="w-4 h-4" />
                         </button>
                       </div>
@@ -238,6 +401,160 @@ const InvoiceList = () => {
             </div>
           </div>
       </div>
+
+      {/* View Modal */}
+      {showViewModal && viewInvoiceData && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-2/3 max-w-4xl max-h-[90vh] overflow-y-auto">
+            <div className="flex justify-between items-center mb-4">
+              <h2 className="text-2xl font-bold">Invoice Details</h2>
+              <div className="flex space-x-2">
+                <button 
+                  onClick={() => printInvoiceFromView(viewInvoiceData)}
+                  className="bg-blue-500 text-white px-4 py-2 rounded hover:bg-blue-600"
+                >
+                  Print Invoice
+                </button>
+                <button onClick={() => setShowViewModal(false)} className="text-gray-500 hover:text-gray-700 text-2xl">
+                  ×
+                </button>
+              </div>
+            </div>
+            
+            <div className="grid grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-2">Invoice Info</h3>
+                <p><strong>Number:</strong> {viewInvoiceData.invoiceNumber}</p>
+                <p><strong>Date:</strong> {new Date(viewInvoiceData.invoiceDate).toLocaleDateString()}</p>
+                <p><strong>Payment Mode:</strong> {viewInvoiceData.paymentMode}</p>
+                <p><strong>Delivery Date:</strong> {viewInvoiceData.deliveryDate ? new Date(viewInvoiceData.deliveryDate).toLocaleDateString() : 'N/A'}</p>
+              </div>
+              
+              <div>
+                <h3 className="font-semibold mb-2">Customer Info</h3>
+                <p><strong>Name:</strong> {viewInvoiceData.customer?.name || 'N/A'}</p>
+                <p><strong>Phone:</strong> {viewInvoiceData.customer?.phone || 'N/A'}</p>
+                <p><strong>Address:</strong> {viewInvoiceData.customer?.address || 'N/A'}</p>
+                <p><strong>Age:</strong> {viewInvoiceData.customer?.age || 'N/A'}</p>
+              </div>
+            </div>
+            
+            <div className="mt-6">
+              <h3 className="font-semibold mb-2">Items</h3>
+              <table className="w-full border">
+                <thead className="bg-gray-50">
+                  <tr>
+                    <th className="border p-2">Frame</th>
+                    <th className="border p-2">Lens</th>
+                    <th className="border p-2">Frame Price</th>
+                    <th className="border p-2">Lens Price</th>
+                    <th className="border p-2">Qty</th>
+                    <th className="border p-2">Total</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {viewInvoiceData.items?.map((item, index) => (
+                    <tr key={index}>
+                      <td className="border p-2">{item.frame || 'N/A'}</td>
+                      <td className="border p-2">{item.lens || 'N/A'}</td>
+                      <td className="border p-2">₹{item.framePrice}</td>
+                      <td className="border p-2">₹{item.lensPrice}</td>
+                      <td className="border p-2">{item.quantity}</td>
+                      <td className="border p-2">₹{item.total}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+            
+            <div className="mt-6 grid grid-cols-2 gap-6">
+              <div>
+                <h3 className="font-semibold mb-2">Financial Summary</h3>
+                <p><strong>Subtotal:</strong> ₹{viewInvoiceData.subtotal}</p>
+                <p><strong>Discount:</strong> {viewInvoiceData.discountPercent}% (-₹{viewInvoiceData.discountAmount})</p>
+                <p><strong>Tax:</strong> {viewInvoiceData.taxPercent}% (₹{viewInvoiceData.taxAmount})</p>
+                <p><strong>Total:</strong> ₹{viewInvoiceData.total}</p>
+                <p><strong>Advance:</strong> ₹{viewInvoiceData.advance}</p>
+                <p><strong>Balance:</strong> ₹{viewInvoiceData.balance}</p>
+              </div>
+              
+              {viewInvoiceData.remarks && (
+                <div>
+                  <h3 className="font-semibold mb-2">Remarks</h3>
+                  <p>{viewInvoiceData.remarks}</p>
+                </div>
+              )}
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Edit Modal */}
+      {showEditModal && editInvoice && (
+        <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50">
+          <div className="bg-white p-6 rounded-lg w-96">
+            <h2 className="text-xl font-semibold mb-4">Edit Invoice</h2>
+            <div className="space-y-4">
+              <div>
+                <label className="block text-sm font-medium mb-1">Payment Mode</label>
+                <select
+                  value={editInvoice.paymentMode}
+                  onChange={(e) => setEditInvoice(prev => ({...prev, paymentMode: e.target.value}))}
+                  className="w-full p-2 border rounded"
+                >
+                  <option value="Cash">Cash</option>
+                  <option value="Card">Card</option>
+                  <option value="UPI">UPI</option>
+                </select>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Advance</label>
+                <input
+                  type="number"
+                  value={editInvoice.advance}
+                  onChange={(e) => setEditInvoice(prev => ({...prev, advance: parseFloat(e.target.value) || 0}))}
+                  className="w-full p-2 border rounded"
+                />
+                <small className="text-gray-500">
+                  Balance will be: ₹{((viewInvoiceData?.total || 0) - editInvoice.advance).toFixed(2)}
+                </small>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Delivery Date</label>
+                <input
+                  type="date"
+                  value={editInvoice.deliveryDate}
+                  onChange={(e) => setEditInvoice(prev => ({...prev, deliveryDate: e.target.value}))}
+                  className="w-full p-2 border rounded"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1">Remarks</label>
+                <textarea
+                  value={editInvoice.remarks}
+                  onChange={(e) => setEditInvoice(prev => ({...prev, remarks: e.target.value}))}
+                  className="w-full p-2 border rounded"
+                  rows="3"
+                />
+              </div>
+            </div>
+            <div className="flex justify-end space-x-3 mt-6">
+              <button 
+                onClick={() => setShowEditModal(false)}
+                className="px-4 py-2 border rounded hover:bg-gray-50"
+              >
+                Cancel
+              </button>
+              <button 
+                onClick={updateInvoice}
+                className="px-4 py-2 bg-blue-500 text-white rounded hover:bg-blue-600"
+              >
+                Update
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </div>
   );
 };

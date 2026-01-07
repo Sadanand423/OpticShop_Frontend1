@@ -1,5 +1,6 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { Plus, Search, Edit, Trash2, X } from 'lucide-react';
+import { invoiceService } from '../services/invoiceService';
 
 const Customers = () => {
   const [showAddModal, setShowAddModal] = useState(false);
@@ -7,11 +8,49 @@ const Customers = () => {
   const [customerForm, setCustomerForm] = useState({ name: '', phone: '', address: '' });
   const [editForm, setEditForm] = useState({ id: '', name: '', phone: '', address: '' });
   const [searchTerm, setSearchTerm] = useState('');
-  const [customers, setCustomers] = useState([
-    { id: 1, name: 'John Doe', phone: '+91 9876543210', address: 'Mumbai, Maharashtra' },
-    { id: 2, name: 'Jane Smith', phone: '+91 9876543211', address: 'Delhi, Delhi' },
-    { id: 3, name: 'Bob Johnson', phone: '+91 9876543212', address: 'Bangalore, Karnataka' },
-  ]);
+  const [customers, setCustomers] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchCustomersFromInvoices();
+  }, []);
+
+  const fetchCustomersFromInvoices = async () => {
+    try {
+      setLoading(true);
+      const invoices = await invoiceService.getAllInvoices();
+      console.log('Fetched invoices:', invoices);
+      const uniqueCustomers = [];
+      const customerMap = new Map();
+      
+      invoices.forEach((invoice, index) => {
+        // Handle both flat and nested customer data
+        const customerName = invoice.customerName || invoice.customer?.name;
+        const customerPhone = invoice.customerPhone || invoice.customer?.phone;
+        const customerAddress = invoice.customerAddress || invoice.customer?.address;
+        
+        const key = customerPhone || customerName || index;
+        if (!customerMap.has(key) && (customerName || customerPhone)) {
+          customerMap.set(key, {
+            id: uniqueCustomers.length + 1,
+            name: customerName || 'N/A',
+            phone: customerPhone || 'N/A',
+            address: customerAddress || 'N/A'
+          });
+          uniqueCustomers.push(customerMap.get(key));
+        }
+      });
+      
+      console.log('Processed customers:', uniqueCustomers);
+      // Sort customers by ID descending (newest first)
+      const sortedCustomers = uniqueCustomers.sort((a, b) => b.id - a.id);
+      setCustomers(sortedCustomers);
+    } catch (error) {
+      console.error('Error fetching customers:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const addCustomer = () => {
     if (!customerForm.name || !customerForm.phone || !customerForm.address) {
@@ -59,9 +98,18 @@ const Customers = () => {
   };
 
   const filteredCustomers = customers.filter(customer => 
-    customer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    customer.phone.includes(searchTerm)
+    (customer.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
+    (customer.phone || '').includes(searchTerm)
   );
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-600"></div>
+        <span className="ml-3 text-lg">Loading customers...</span>
+      </div>
+    );
+  }
 
   return (
     <div>
@@ -101,29 +149,37 @@ const Customers = () => {
               </tr>
             </thead>
             <tbody className="divide-y divide-gray-200">
-              {filteredCustomers.map((customer) => (
-                <tr key={customer.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{customer.name}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">{customer.phone}</td>
-                  <td className="px-6 py-4 whitespace-nowrap text-gray-600">{customer.address}</td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex space-x-2">
-                      <button 
-                        onClick={() => editCustomer(customer)}
-                        className="text-blue-600 hover:text-blue-800"
-                      >
-                        <Edit className="w-4 h-4" />
-                      </button>
-                      <button 
-                        onClick={() => deleteCustomer(customer.id)}
-                        className="text-red-600 hover:text-red-800"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </button>
-                    </div>
+              {customers.length === 0 ? (
+                <tr>
+                  <td colSpan="4" className="px-6 py-8 text-center text-gray-500">
+                    No customers found. Create invoices to see customers here.
                   </td>
                 </tr>
-              ))}
+              ) : (
+                filteredCustomers.map((customer) => (
+                  <tr key={customer.id} className="hover:bg-gray-50">
+                    <td className="px-6 py-4 whitespace-nowrap font-medium text-gray-900">{customer.name}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{customer.phone}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-gray-600">{customer.address}</td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex space-x-2">
+                        <button 
+                          onClick={() => editCustomer(customer)}
+                          className="text-blue-600 hover:text-blue-800"
+                        >
+                          <Edit className="w-4 h-4" />
+                        </button>
+                        <button 
+                          onClick={() => deleteCustomer(customer.id)}
+                          className="text-red-600 hover:text-red-800"
+                        >
+                          <Trash2 className="w-4 h-4" />
+                        </button>
+                      </div>
+                    </td>
+                  </tr>
+                ))
+              )}
             </tbody>
           </table>
         </div>

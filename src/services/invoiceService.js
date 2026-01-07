@@ -90,4 +90,52 @@ export const invoiceService = {
       throw error;
     }
   },
+
+  // ✅ Delete invoice
+  deleteInvoice: async (id) => {
+    try {
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'DELETE',
+        headers: {
+          'Authorization': `Bearer ${token}`
+        }
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return true;
+    } catch (error) {
+      console.error('Error deleting invoice:', error);
+      throw error;
+    }
+  },
+
+  // ✅ Update invoice
+  updateInvoice: async (id, invoiceData) => {
+    try {
+      const token = localStorage.getItem("token");
+      
+      const response = await fetch(`${API_BASE_URL}/${id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify(invoiceData)
+      });
+
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      return await response.json();
+    } catch (error) {
+      console.error('Error updating invoice:', error);
+      throw error;
+    }
+  },
 };
