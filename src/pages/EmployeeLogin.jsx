@@ -54,6 +54,12 @@ const EmployeeLogin = () => {
           Back to Home
         </Link>
 
+        {/* Shop Info Template */}
+        <div className="bg-white/80 backdrop-blur rounded-xl p-4 mb-6 border border-green-100">
+          <h3 className="text-lg font-bold text-gray-800 mb-1">👓 Vision Optic Shop</h3>
+          <p className="text-sm text-gray-600">Complete eyewear solutions with prescription lenses, frames & eye care services</p>
+        </div>
+
         {/* Login Card */}
         <div className="bg-white rounded-2xl shadow-2xl border p-8">
 
